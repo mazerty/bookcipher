@@ -13,12 +13,12 @@ mkdir tmp
 prfg test 1000000 > tmp/reference
 
 # tests the decipher
-../src/bookcipher medium tmp/reference results/cipher tmp/decipher
+../src/bookcipher decipher tmp/reference results/cipher tmp/decipher
 diff results/original tmp/decipher
 
 # tests the cipher-decipher
-../src/bookcipher hard tmp/reference results/original tmp/cipher
-../src/bookcipher medium tmp/reference tmp/cipher tmp/decipher
+../src/bookcipher cipher tmp/reference results/original tmp/cipher
+../src/bookcipher decipher tmp/reference tmp/cipher tmp/decipher
 diff results/original tmp/decipher
 
 # cleans tmp directory

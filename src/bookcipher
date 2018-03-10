@@ -6,70 +6,58 @@ import os
 import random
 
 
-def medium(args):
-    ref = []
+def cipher(args):
+    # first we're gonna parse the reference file to build a map matching each byte value with a list of positions where
+    # the byte value can be found in the reference file
+    reference = collections.defaultdict(list)
+    with open(args.reference, "rb") as file:
+        byte = file.read(1)
+        position = 0
+        while byte:
+            reference[byte].append(position)
+            position = position + 1
+            byte = file.read(1)
 
-    with open(args.ref, "rb") as f:
-        b = f.read(1)
-        while b:
-            ref.append(b)
-            b = f.read(1)
+    # since there are 256 possible values for a byte...
+    if len(reference) < 256:
+        raise Exception("reference file must be big and \"random\" enough to contain each byte value at least once")
 
-    output = []
-
-    with open(args.input, "r") as f:
-        input = f.read().splitlines()
-
-    for line in input:
-        output.append(ref[int(line)])
-
-    with open(args.output, "wb") as f:
-        for b in output:
-            f.write(b)
-
-
-def hard(args):
-    ref = collections.defaultdict(list)
-
-    with open(args.ref, "rb") as f:
-        b = f.read(1)
-        i = 0
-        while b:
-            ref[b].append(i)
-            i = i + 1
-            b = f.read(1)
-
-    if len(ref) < 256:
-        raise Exception
-
-    output = []
-
-    with open(args.input, "rb") as f:
-        b = f.read(1)
-        while b:
-            output.append(ref[b][random.randrange(len(ref[b]))])
-            b = f.read(1)
-
-    with open(args.output, "w") as f:
-        for item in output:
-            f.write(str(item) + os.linesep)
+    # then, for each byte of the original file, we pick a random position in the reference map matching the byte value
+    # and we write it on a new line of the output file
+    with open(args.original, "rb") as original, open(args.output, "w") as output:
+        byte = original.read(1)
+        while byte:
+            possible_positions = reference[byte]
+            random_position = possible_positions[random.randrange(len(possible_positions))]
+            output.write(str(random_position) + os.linesep)
+            byte = original.read(1)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+def decipher(args):
+    # for each line (eg. position) in the ciphered file, we look for the corresponding byte in the reference file
+    # and write it in the output file
+    with open(args.cipher, "r") as cipher, open(args.reference, "rb") as reference, open(args.output, "wb") as output:
+        for line in cipher:
+            reference.seek(int(line))
+            output.write(reference.read(1))
+
+
+# entrypoint
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="A book cipher algorithm applied to files.")
     subparsers = parser.add_subparsers()
 
-    parser_medium = subparsers.add_parser("medium")
-    parser_medium.add_argument("ref", nargs="?")
-    parser_medium.add_argument("input", nargs="?")
-    parser_medium.add_argument("output", nargs="?")
-    parser_medium.set_defaults(func=medium)
+    parser_cipher = subparsers.add_parser("cipher", help="ciphers a file")
+    parser_cipher.add_argument("reference", help="path to the reference file, i.e. the \"book\"")
+    parser_cipher.add_argument("original", help="path to the original file, to be ciphered")
+    parser_cipher.add_argument("output", help="path to the generated, ciphered file")
+    parser_cipher.set_defaults(func=cipher)
 
-    parser_hard = subparsers.add_parser("hard")
-    parser_hard.add_argument("ref", nargs="?")
-    parser_hard.add_argument("input", nargs="?")
-    parser_hard.add_argument("output", nargs="?")
-    parser_hard.set_defaults(func=hard)
+    parser_decipher = subparsers.add_parser("decipher", help="deciphers a file")
+    parser_decipher.add_argument("reference", help="path to the reference file, i.e. the \"book\"")
+    parser_decipher.add_argument("cipher", help="path to the ciphered file, to be deciphered")
+    parser_decipher.add_argument("output", help="path to the generated, deciphered file")
+    parser_decipher.set_defaults(func=decipher)
 
     args = parser.parse_args()
     args.func(args)
