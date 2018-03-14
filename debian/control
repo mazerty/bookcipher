@@ -1,0 +1,11 @@
+Source: bookcipher
+Section: utils
+Priority: optional
+Maintainer: Thomas JOUANNOT (Mazerty) <mazerty@gmail.com>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.7
+
+Package: bookcipher
+Architecture: all
+Depends: ${misc:Depends}, python3
+Description: A book cipher algorithm applied to files
